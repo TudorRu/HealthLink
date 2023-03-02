@@ -111,7 +111,7 @@ class HomaPage extends StatelessWidget {
                     .width - 177) / 2, child: TextButton(
                   onPressed: () {},
                   child: Text('Continue anonymously', style: TextStyle(fontWeight: FontWeight.w500,
-                      fontSize: 19)),
+                      fontSize: 19, color: Color(0xFFEF8808))),
                 ))
           ],
         )
