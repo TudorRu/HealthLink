@@ -6,9 +6,20 @@ import 'package:crypto/crypto.dart';
 
 enum ApiCall {
   BODY_PART,
+  SUB_BODY_PART,
   SYMPTOMS,
   ISSUES,
   ISSUE_INFO,
+  BODY_SYMPTOMS,
+  MORE_SYMPTOMS,
+  DIAGNOSIS,
+}
+
+enum ApiGender {
+  WOMAN,
+  MAN,
+  BOY,
+  GIRL,
 }
 
 class ApiTestScreen extends StatefulWidget {
@@ -19,22 +30,28 @@ class ApiTestScreen extends StatefulWidget {
 }
 
 class _ApiTestScreenState extends State<ApiTestScreen> {
-  final _controller = TextEditingController();
-  final _focusNode = FocusNode();
+  final _firstController = TextEditingController();
+  final _secondController = TextEditingController();
+  final _firstFocusNode = FocusNode();
+  final _secondFocusNode = FocusNode();
 
   String accessToken = '';
   bool connectedToAPI = false;
-  int? _selectedIssue;
+  int? _complementaryID;
+  int? _birthYear;
   ApiCall? _selectedApiCall = ApiCall.BODY_PART;
+  ApiGender? _selectedGender = ApiGender.WOMAN;
   ApiCall? _lastSelectedApi;
   String debugText = 'Debug text';
   String buttonText = 'Connect to API';
   String bodyTempText = 'Waiting for API calls';
+  List<int> symptoms = [];
   List<dynamic> allAPIfetchedElements = [];
 
   @override
   void dispose() {
-    _controller.dispose();
+    _firstController.dispose();
+    _secondController.dispose();
     super.dispose();
   }
 
@@ -61,7 +78,7 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
               Row(
                 children: [
                   const SizedBox(
-                    width: 50,
+                    width: 10,
                   ),
                   connectedToAPI
                       ? DropdownButton<ApiCall>(
@@ -82,7 +99,7 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
                           height: 0,
                         ),
                   const SizedBox(
-                    width: 50,
+                    width: 20,
                   ),
                   ElevatedButton(
                       onPressed: () {
@@ -92,7 +109,7 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
                       },
                       child: Text(buttonText)),
                   const SizedBox(
-                    width: 50,
+                    width: 20,
                   ),
                 ],
               ),
@@ -101,30 +118,84 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
               ),
               Row(
                 children: [
-                  _selectedApiCall == ApiCall.ISSUE_INFO
-                      ? SizedBox(
-                    width: 250,
-                    child: TextField(
-                      focusNode: _focusNode,
-                      controller: _controller,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Enter an issue ID',
-                        border: OutlineInputBorder(),
-                      ),
-                      onTapOutside: (pde){
-                        _selectedIssue = int.parse(_controller.text);
-                        _focusNode.unfocus();
-                      },
-                      onEditingComplete: () {
-                        _selectedIssue = int.parse(_controller.text);
-                        _focusNode.unfocus();
-                        _fetchAPI(ApiCall.ISSUE_INFO);
-                      },
-                    ),
-                  )
+                  const SizedBox(
+                    width: 10,
+                  ),
+                  (_selectedApiCall == ApiCall.ISSUE_INFO ||
+                          _selectedApiCall == ApiCall.SUB_BODY_PART ||
+                          _selectedApiCall == ApiCall.BODY_SYMPTOMS ||
+                          _selectedApiCall == ApiCall.MORE_SYMPTOMS ||
+                          _selectedApiCall == ApiCall.DIAGNOSIS)
+                      ? Expanded(
+                          child: TextField(
+                            focusNode: _firstFocusNode,
+                            controller: _firstController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Enter complementary ID',
+                              border: OutlineInputBorder(),
+                            ),
+                            onTapOutside: (pde) {
+                              _complementaryID =
+                                  int.parse(_firstController.text);
+                              _firstFocusNode.unfocus();
+                            },
+                            onEditingComplete: () {
+                              _complementaryID =
+                                  int.parse(_firstController.text);
+                              _firstFocusNode.unfocus();
+                            },
+                          ),
+                        )
                       : const SizedBox(
-                    width: 250,
+                          width: 250,
+                        ),
+                  (_selectedApiCall == ApiCall.BODY_SYMPTOMS ||
+                          _selectedApiCall == ApiCall.MORE_SYMPTOMS ||
+                          _selectedApiCall == ApiCall.DIAGNOSIS)
+                      ? DropdownButton<ApiGender>(
+                          value: _selectedGender,
+                          onChanged: (ApiGender? value) {
+                            setState(() {
+                              _selectedGender = value;
+                            });
+                          },
+                          items: ApiGender.values.map((ApiGender apiGender) {
+                            return DropdownMenuItem<ApiGender>(
+                              value: apiGender,
+                              child: Text(apiGender.toString()),
+                            );
+                          }).toList(),
+                        )
+                      : const SizedBox(
+                          width: 10,
+                        ),
+                  (_selectedApiCall == ApiCall.MORE_SYMPTOMS ||
+                          _selectedApiCall == ApiCall.DIAGNOSIS)
+                      ? Expanded(
+                          child: TextField(
+                            focusNode: _secondFocusNode,
+                            controller: _secondController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Enter birth year',
+                              border: OutlineInputBorder(),
+                            ),
+                            onTapOutside: (pde) {
+                              _birthYear = int.parse(_secondController.text);
+                              _secondFocusNode.unfocus();
+                            },
+                            onEditingComplete: () {
+                              _birthYear = int.parse(_secondController.text);
+                              _secondFocusNode.unfocus();
+                            },
+                          ),
+                        )
+                      : const SizedBox(
+                          width: 10,
+                        ),
+                  const SizedBox(
+                    width: 10,
                   ),
                 ],
               ),
@@ -214,7 +285,34 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
           bodyTempText = 'fetching issue from API...';
         });
         _fetchAPIelem(
-            'https://sandbox-healthservice.priaid.ch/issues/${_selectedIssue}/info');
+            'https://sandbox-healthservice.priaid.ch/issues/$_complementaryID/info');
+        break;
+      case ApiCall.SUB_BODY_PART:
+        setState(() {
+          bodyTempText = 'fetching sub-bodyparts from API...';
+        });
+        _fetchAPIelem(
+            'https://sandbox-healthservice.priaid.ch/body/locations/$_complementaryID');
+        break;
+      case ApiCall.BODY_SYMPTOMS:
+        setState(() {
+          bodyTempText = 'fetching body symptoms from API...';
+        });
+        _fetchAPIelem(
+            'https://sandbox-healthservice.priaid.ch/symptoms/$_complementaryID/${getStatusString()}');
+        break;
+      case ApiCall.MORE_SYMPTOMS:
+        setState(() {
+          bodyTempText = 'fetching related symptoms from API...';
+        });
+        _fetchAPIelem(
+            'https://sandbox-healthservice.priaid.ch/symptoms/proposed');
+        break;
+      case ApiCall.DIAGNOSIS:
+        setState(() {
+          bodyTempText = 'fetching diagnosis from API...';
+        });
+        _fetchAPIelem('https://sandbox-healthservice.priaid.ch/diagnosis');
         break;
       default:
         setState(() {
@@ -232,17 +330,66 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
     switch (_selectedApiCall) {
       case ApiCall.ISSUE_INFO:
         setState(() {
-          debugText ="sending http get request for issue_info";
+          debugText = "sending http get request for issue_info";
         });
         response = await http.get(uri.replace(queryParameters: {
           'token': accessToken,
-          'issue_id': _selectedIssue.toString(),
+          'issue_id': _complementaryID.toString(),
+          'language': 'en-gb',
+        }));
+        break;
+      case ApiCall.SUB_BODY_PART:
+        setState(() {
+          debugText = "sending http get request for sub_body_part";
+        });
+        response = await http.get(uri.replace(queryParameters: {
+          'token': accessToken,
+          'location_id': _complementaryID.toString(),
+          'language': 'en-gb',
+        }));
+        break;
+      case ApiCall.BODY_SYMPTOMS:
+        setState(() {
+          debugText = "sending http get request for body symptoms";
+        });
+        response = await http.get(uri.replace(queryParameters: {
+          'token': accessToken,
+          'location_id': _complementaryID.toString(),
+          'selectorStatus': getStatusString(),
+          'language': 'en-gb',
+        }));
+        break;
+      case ApiCall.MORE_SYMPTOMS:
+        setState(() {
+          debugText = "sending http get request for related symptoms";
+        });
+        symptoms.clear();
+        symptoms.add(_complementaryID!);
+        response = await http.get(uri.replace(queryParameters: {
+          'token': accessToken,
+          'symptoms': jsonEncode(symptoms),
+          'gender': getGenderString(),
+          'year_of_birth': _birthYear.toString(),
+          'language': 'en-gb',
+        }));
+        break;
+      case ApiCall.DIAGNOSIS:
+        setState(() {
+          debugText = "sending http get request for diagnosis";
+        });
+        symptoms.clear();
+        symptoms.add(_complementaryID!);
+        response = await http.get(uri.replace(queryParameters: {
+          'token': accessToken,
+          'symptoms': jsonEncode(symptoms),
+          'gender': getGenderString(),
+          'year_of_birth': _birthYear.toString(),
           'language': 'en-gb',
         }));
         break;
       default:
         setState(() {
-          debugText ="sending http get request for api data";
+          debugText = "sending http get request for api data";
         });
         response = await http.get(uri.replace(queryParameters: {
           'token': accessToken,
@@ -251,8 +398,8 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
     }
 
     if (response.statusCode == 200) {
-      switch(myApiCall){
-        case ApiCall.ISSUE_INFO :
+      switch (myApiCall) {
+        case ApiCall.ISSUE_INFO:
           final Map<String, dynamic> apiInfo = json.decode(response.body);
           allAPIfetchedElements.add(apiInfo);
           break;
@@ -272,6 +419,48 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
         debugText = 'Error : ${response.statusCode}';
       });
     }
+  }
+
+  String getStatusString() {
+    String gender;
+    switch (_selectedGender) {
+      case ApiGender.WOMAN:
+        gender = "woman";
+        break;
+      case ApiGender.MAN:
+        gender = "man";
+        break;
+      case ApiGender.GIRL:
+        gender = "girl";
+        break;
+      case ApiGender.BOY:
+        gender = "boy";
+        break;
+      default:
+        gender = "woman";
+    }
+    return gender;
+  }
+
+  String getGenderString() {
+    String gender;
+    switch (_selectedGender) {
+      case ApiGender.WOMAN:
+        gender = "female";
+        break;
+      case ApiGender.MAN:
+        gender = "male";
+        break;
+      case ApiGender.GIRL:
+        gender = "female";
+        break;
+      case ApiGender.BOY:
+        gender = "male";
+        break;
+      default:
+        gender = "female";
+    }
+    return gender;
   }
 }
 
@@ -340,6 +529,19 @@ class ApiElemList extends StatelessWidget {
               ),
             ],
           ),
+        );
+      case ApiCall.DIAGNOSIS:
+        return ListView.builder(
+          itemCount: APIelements.length,
+          itemBuilder: (BuildContext context, int index) {
+            return Card(
+              child: ListTile(
+                title: Text("${APIelements[index]['Issue']['ID']} - ${APIelements[index]['Issue']['Name']}"),
+                subtitle: Text(
+                    "${APIelements[index]['Specialisation'][0]['ID']} : ${APIelements[index]['Specialisation'][0]['Name']}"),
+              ),
+            );
+          },
         );
       default:
         return ListView.builder(
