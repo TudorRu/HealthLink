@@ -13,6 +13,8 @@ enum ApiCall {
   BODY_SYMPTOMS,
   MORE_SYMPTOMS,
   DIAGNOSIS,
+  SPECIALIST,
+  REDFLAG,
 }
 
 enum ApiGender {
@@ -125,7 +127,9 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
                           _selectedApiCall == ApiCall.SUB_BODY_PART ||
                           _selectedApiCall == ApiCall.BODY_SYMPTOMS ||
                           _selectedApiCall == ApiCall.MORE_SYMPTOMS ||
-                          _selectedApiCall == ApiCall.DIAGNOSIS)
+                          _selectedApiCall == ApiCall.DIAGNOSIS ||
+                          _selectedApiCall == ApiCall.SPECIALIST ||
+                          _selectedApiCall == ApiCall.REDFLAG)
                       ? Expanded(
                           child: TextField(
                             focusNode: _firstFocusNode,
@@ -152,7 +156,8 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
                         ),
                   (_selectedApiCall == ApiCall.BODY_SYMPTOMS ||
                           _selectedApiCall == ApiCall.MORE_SYMPTOMS ||
-                          _selectedApiCall == ApiCall.DIAGNOSIS)
+                          _selectedApiCall == ApiCall.DIAGNOSIS ||
+                          _selectedApiCall == ApiCall.SPECIALIST)
                       ? DropdownButton<ApiGender>(
                           value: _selectedGender,
                           onChanged: (ApiGender? value) {
@@ -171,7 +176,8 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
                           width: 10,
                         ),
                   (_selectedApiCall == ApiCall.MORE_SYMPTOMS ||
-                          _selectedApiCall == ApiCall.DIAGNOSIS)
+                          _selectedApiCall == ApiCall.DIAGNOSIS ||
+                          _selectedApiCall == ApiCall.SPECIALIST)
                       ? Expanded(
                           child: TextField(
                             focusNode: _secondFocusNode,
@@ -314,6 +320,19 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
         });
         _fetchAPIelem('https://sandbox-healthservice.priaid.ch/diagnosis');
         break;
+      case ApiCall.SPECIALIST:
+        setState(() {
+          bodyTempText = 'fetching specialist from API...';
+        });
+        _fetchAPIelem(
+            'https://sandbox-healthservice.priaid.ch/diagnosis/specialisations');
+        break;
+      case ApiCall.REDFLAG:
+        setState(() {
+          bodyTempText = 'fetching redflag warnings from API...';
+        });
+        _fetchAPIelem('https://sandbox-healthservice.priaid.ch/redflag');
+        break;
       default:
         setState(() {
           bodyTempText = 'invalid API selection';
@@ -387,6 +406,30 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
           'language': 'en-gb',
         }));
         break;
+      case ApiCall.SPECIALIST:
+        setState(() {
+          debugText = "sending http get request for specialist";
+        });
+        symptoms.clear();
+        symptoms.add(_complementaryID!);
+        response = await http.get(uri.replace(queryParameters: {
+          'token': accessToken,
+          'symptoms': jsonEncode(symptoms),
+          'gender': getGenderString(),
+          'year_of_birth': _birthYear.toString(),
+          'language': 'en-gb',
+        }));
+        break;
+      case ApiCall.REDFLAG:
+        setState(() {
+          debugText = "sending http get request for redflag warnings";
+        });
+        response = await http.get(uri.replace(queryParameters: {
+          'token': accessToken,
+          'symptomId': _complementaryID.toString(),
+          'language': 'en-gb',
+        }));
+        break;
       default:
         setState(() {
           debugText = "sending http get request for api data";
@@ -401,6 +444,10 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
       switch (myApiCall) {
         case ApiCall.ISSUE_INFO:
           final Map<String, dynamic> apiInfo = json.decode(response.body);
+          allAPIfetchedElements.add(apiInfo);
+          break;
+        case ApiCall.REDFLAG:
+          final String apiInfo = json.decode(response.body);
           allAPIfetchedElements.add(apiInfo);
           break;
         default:
@@ -474,6 +521,28 @@ class ApiElemList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     switch (apiCall) {
+      case ApiCall.REDFLAG:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Symptoms warnings : ",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              (APIelements[0]!="")
+              ? APIelements[0]
+              : "Base on your symptoms, you shouldn't have to see a doctor.",
+              style: const TextStyle(
+                fontSize: 16,
+              ),
+            ),
+          ],
+        );
       case ApiCall.ISSUE_INFO:
         return SingleChildScrollView(
           child: Column(
@@ -483,7 +552,7 @@ class ApiElemList extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
                   APIelements[0]['Name'],
-                  style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
                 ),
               ),
               Padding(
@@ -491,38 +560,38 @@ class ApiElemList extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Description',
                       style: TextStyle(
                         fontSize: 20.0,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 8.0),
+                    const SizedBox(height: 8.0),
                     Text(
                       APIelements[0]['Description'],
-                      style: TextStyle(fontSize: 16.0),
+                      style: const TextStyle(fontSize: 16.0),
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: 16.0),
+              const SizedBox(height: 16.0),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Medical condition',
                       style: TextStyle(
                         fontSize: 20.0,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 8.0),
+                    const SizedBox(height: 8.0),
                     Text(
                       APIelements[0]['MedicalCondition'],
-                      style: TextStyle(fontSize: 16.0),
+                      style: const TextStyle(fontSize: 16.0),
                     ),
                   ],
                 ),
@@ -536,7 +605,8 @@ class ApiElemList extends StatelessWidget {
           itemBuilder: (BuildContext context, int index) {
             return Card(
               child: ListTile(
-                title: Text("${APIelements[index]['Issue']['ID']} - ${APIelements[index]['Issue']['Name']}"),
+                title: Text(
+                    "${APIelements[index]['Issue']['ID']} - ${APIelements[index]['Issue']['Name']}"),
                 subtitle: Text(
                     "${APIelements[index]['Specialisation'][0]['ID']} : ${APIelements[index]['Specialisation'][0]['Name']}"),
               ),
