@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'diagnosis_workflow.dart';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -62,6 +63,17 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
     return Scaffold(
         appBar: AppBar(
           title: const Text('API test Page'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.navigate_next),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => DiagnosisWorkflow()),
+                );
+              },
+            ),
+          ],
         ),
         body: Center(
           child: Column(
@@ -534,9 +546,9 @@ class ApiElemList extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              (APIelements[0]!="")
-              ? APIelements[0]
-              : "Base on your symptoms, you shouldn't have to see a doctor.",
+              (APIelements[0] != "")
+                  ? APIelements[0]
+                  : "Base on your symptoms, you shouldn't have to see a doctor.",
               style: const TextStyle(
                 fontSize: 16,
               ),
@@ -552,7 +564,8 @@ class ApiElemList extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
                   APIelements[0]['Name'],
-                  style: const TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 24.0, fontWeight: FontWeight.bold),
                 ),
               ),
               Padding(
