@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:healthlink/homePage.dart';
+import 'package:healthlink/illnessDetailsPage.dart';
 
 class PossibleIllnessPage extends StatelessWidget {
   const PossibleIllnessPage({Key? key}) : super(key: key);
@@ -70,7 +71,7 @@ class PossibleIllnessPage extends StatelessWidget {
             child: Container(
               width: MediaQuery.of(context).size.width,
               child: SingleChildScrollView(
-                  child: buildCauses()
+                  child: buildCauses(context)
               ),
             ),
           ),
@@ -107,7 +108,7 @@ class PossibleIllnessPage extends StatelessWidget {
     );
   }
 
-  Widget buildCauses(){
+  Widget buildCauses(context){
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -139,7 +140,12 @@ class PossibleIllnessPage extends StatelessWidget {
                             foregroundColor: Colors.black,
                             backgroundColor: Colors.transparent
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => IllnessDetailsPage(), // push the new page onto the stack
+                              ));
+                        },
                         child: Padding(
                           padding: const EdgeInsets.only(left: 10,right: 10),
                           child: Text('Tell me more', style: TextStyle(

@@ -42,6 +42,66 @@ class _DiagnosisPageState extends State<DiagnosisPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    DiagnosisStep _actualStep = DiagnosisStep.GENDER;
+    String _question = "What's your gender ?";
+    String _debugText = "Debug text";
+
+    Profile _patientProfile = Profile();
+    String _illnessLocation = "";
+
+    void _updateGender(ApiGender gender) {
+      setState(() {
+        _patientProfile.gender = gender;
+      });
+    }
+
+    void _updateBirthYear(int birthyear) {
+      setState(() {
+        _patientProfile.birthYear = birthyear;
+      });
+    }
+
+    void _updateIllnessLocation(String illnesslocation) {
+      setState(() {
+        _illnessLocation = illnesslocation;
+      });
+    }
+
+    void _updateQuestion() {
+      setState(() {
+        switch (_actualStep) {
+          case DiagnosisStep.GENDER:
+            _question = "What's your gender ?";
+            break;
+          case DiagnosisStep.BIRTH_YEAR:
+            _debugText = "Gender selected : ${_patientProfile.gender.toString()}";
+            _question = "What's your birth year?";
+            break;
+          case DiagnosisStep.ILLNESS_LOCATION:
+            _debugText =
+            "Birth year entered : ${_patientProfile.birthYear.toString()}";
+            _question = "Where is it hurting ?";
+            break;
+          case DiagnosisStep.PRECISE_ILLNESS_LOCATION:
+            _debugText = "Illness location chosen : $_illnessLocation";
+            _question = "More precisely ?";
+            break;
+          default:
+            _question = "Unexistant diagnosis step question";
+        }
+      });
+    }
+
+    void _moveToNextPhase() {
+      if (_actualStep != DiagnosisStep.DIAGNOSIS) {
+        _actualStep = DiagnosisStep.values[_actualStep.index + 1];
+      }
+      print("Move to phase : $_actualStep");
+      _updateQuestion();
+    }
+
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
