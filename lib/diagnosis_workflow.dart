@@ -4,7 +4,6 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
-import 'api_test_screen.dart';
 import 'package:http/http.dart' as http;
 
 enum DiagnosisStep {
@@ -12,17 +11,28 @@ enum DiagnosisStep {
   BIRTH_YEAR,
   ILLNESS_LOCATION,
   PRECISE_ILLNESS_LOCATION,
-  PROPOSED_SYMPTOMS,
+  LOCATED_SYMPTOMS,
   RELATED_SYMPTOMS,
+  DIAGNOSIS,
+  ISSUE
+}
+
+enum ApiCall {
+  BODY_PART,
+  SUB_BODY_PART,
+  SYMPTOMS,
+  ISSUES,
+  ISSUE_INFO,
+  BODY_SYMPTOMS,
   MORE_SYMPTOMS,
   DIAGNOSIS,
+  SPECIALIST,
+  REDFLAG,
 }
 
 enum ApiGender {
   WOMAN,
   MAN,
-  BOY,
-  GIRL,
 }
 
 class DiagnosisWorkflow extends StatefulWidget {
@@ -39,6 +49,7 @@ class _DiagnosisWorkflowState extends State<DiagnosisWorkflow> {
 
   Profile _patientProfile = Profile();
   String _illnessLocation = "";
+  String _preciseIllnessLocation = "";
 
   void _updateGender(ApiGender gender) {
     setState(() {
@@ -58,8 +69,26 @@ class _DiagnosisWorkflowState extends State<DiagnosisWorkflow> {
     });
   }
 
+  void _updatePreciseIllnessLocation(String preciseIllnesslocation) {
+    setState(() {
+      _preciseIllnessLocation = preciseIllnesslocation;
+    });
+  }
+
+  void _addSymptom(dynamic symptomToAdd) {
+    setState(() {
+      _patientProfile.symptoms.add(symptomToAdd);
+    });
+  }
+
+  void _updateIssue(dynamic issueToAdd) {
+    setState(() {
+      _patientProfile.issue = issueToAdd;
+    });
+  }
+
   void _moveToNextPhase() {
-    if (_actualStep != DiagnosisStep.DIAGNOSIS) {
+    if (_actualStep != DiagnosisStep.ISSUE) {
       _actualStep = DiagnosisStep.values[_actualStep.index + 1];
     }
     print("Move to phase : $_actualStep");
@@ -84,6 +113,24 @@ class _DiagnosisWorkflowState extends State<DiagnosisWorkflow> {
         case DiagnosisStep.PRECISE_ILLNESS_LOCATION:
           _debugText = "Illness location chosen : $_illnessLocation";
           _question = "More precisely ?";
+          break;
+        case DiagnosisStep.LOCATED_SYMPTOMS:
+          _debugText =
+              "Illness precise location chosen : $_preciseIllnessLocation";
+          _question = "What is your symptom ?";
+          break;
+        case DiagnosisStep.RELATED_SYMPTOMS:
+          _debugText =
+              "Symptom picked : ${_patientProfile.symptoms[0]["Name"]}";
+          _question = "Do you have some of those related symptoms ?";
+          break;
+        case DiagnosisStep.DIAGNOSIS:
+          _debugText = "Symptoms picked : ${_patientProfile.printSymptoms()}";
+          _question = "Pick the issue that seems the most relatable :";
+          break;
+        case DiagnosisStep.ISSUE:
+          _debugText = "Issue picked : ${_patientProfile.issue["Name"]}";
+          _question = "Here is your diagnosis :";
           break;
         default:
           _question = "Unexistant diagnosis step question";
@@ -111,10 +158,13 @@ class _DiagnosisWorkflowState extends State<DiagnosisWorkflow> {
         ),
         AnswerBuilder(
           actualStep: _actualStep,
+          moveToNextPhase: _moveToNextPhase,
           updateGender: _updateGender,
           updateIllnessLocation: _updateIllnessLocation,
           updatedBirthYear: _updateBirthYear,
-          moveToNextPhase: _moveToNextPhase,
+          updatePreciseIllnessLocation: _updatePreciseIllnessLocation,
+          addSymptom: _addSymptom,
+          addIssue: _updateIssue,
         ),
       ]),
     );
@@ -127,6 +177,9 @@ class AnswerBuilder extends StatefulWidget {
   final Function(int) updatedBirthYear;
   final Function() moveToNextPhase;
   final Function(String) updateIllnessLocation;
+  final Function(String) updatePreciseIllnessLocation;
+  final Function(dynamic) addSymptom;
+  final Function(dynamic) addIssue;
 
   const AnswerBuilder(
       {Key? key,
@@ -134,7 +187,10 @@ class AnswerBuilder extends StatefulWidget {
       required this.actualStep,
       required this.updateGender,
       required this.updatedBirthYear,
-      required this.updateIllnessLocation})
+      required this.updateIllnessLocation,
+      required this.updatePreciseIllnessLocation,
+      required this.addSymptom,
+      required this.addIssue})
       : super(key: key);
 
   @override
@@ -150,6 +206,11 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
   bool _dataFetchedSuccessfully = false;
 
   int _bodyPartID = 0;
+  int _bodyPrecisePartID = 0;
+  int _birthYearChosed = 0;
+  List<int> _pickedSymptom = [];
+  int _pickedIssueID = 0;
+  ApiGender _selectedGender = ApiGender.WOMAN;
   List<dynamic> allAPIfetchedElements = [];
 
   @override
@@ -190,6 +251,44 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
     return base64Url.encode(digest.bytes);
   }
 
+  String getStatusString() {
+    String gender;
+    switch (_selectedGender) {
+      case ApiGender.WOMAN:
+        if (2023 - _birthYearChosed < 16) {
+          gender = "girl";
+        } else {
+          gender = "woman";
+        }
+        break;
+      case ApiGender.MAN:
+        if (2023 - _birthYearChosed < 16) {
+          gender = "boy";
+        } else {
+          gender = "man";
+        }
+        break;
+      default:
+        gender = "woman";
+    }
+    return gender;
+  }
+
+  String getGenderString() {
+    String gender;
+    switch (_selectedGender) {
+      case ApiGender.WOMAN:
+        gender = "female";
+        break;
+      case ApiGender.MAN:
+        gender = "male";
+        break;
+      default:
+        gender = "female";
+    }
+    return gender;
+  }
+
   void _fetchAPI(ApiCall apiCall) {
     allAPIfetchedElements.clear();
     _dataFetchedSuccessfully = false;
@@ -204,26 +303,30 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
 /*      case ApiCall.ISSUES:
         _fetchAPIelem('https://sandbox-healthservice.priaid.ch/issues');
         break;*/
-/*      case ApiCall.ISSUE_INFO:
+      case ApiCall.ISSUE_INFO:
         _fetchAPIelem(
-            'https://sandbox-healthservice.priaid.ch/issues/$_complementaryID/info');
-        break;*/
+            'https://sandbox-healthservice.priaid.ch/issues/$_pickedIssueID/info',
+            apiCall);
+        break;
       case ApiCall.SUB_BODY_PART:
         _fetchAPIelem(
             'https://sandbox-healthservice.priaid.ch/body/locations/${_bodyPartID.toString()}',
             apiCall);
         break;
-/*      case ApiCall.BODY_SYMPTOMS:
+      case ApiCall.BODY_SYMPTOMS:
         _fetchAPIelem(
-            'https://sandbox-healthservice.priaid.ch/symptoms/$_complementaryID/${getStatusString()}');
-        break;*/
-/*      case ApiCall.MORE_SYMPTOMS:
+            'https://sandbox-healthservice.priaid.ch/symptoms/$_bodyPrecisePartID/${getStatusString()}',
+            apiCall);
+        break;
+      case ApiCall.MORE_SYMPTOMS:
         _fetchAPIelem(
-            'https://sandbox-healthservice.priaid.ch/symptoms/proposed');
-        break;*/
-/*      case ApiCall.DIAGNOSIS:
-        _fetchAPIelem('https://sandbox-healthservice.priaid.ch/diagnosis');
-        break;*/
+            'https://sandbox-healthservice.priaid.ch/symptoms/proposed',
+            apiCall);
+        break;
+      case ApiCall.DIAGNOSIS:
+        _fetchAPIelem(
+            'https://sandbox-healthservice.priaid.ch/diagnosis', apiCall);
+        break;
 /*      case ApiCall.SPECIALIST:
         _fetchAPIelem(
             'https://sandbox-healthservice.priaid.ch/diagnosis/specialisations');
@@ -242,14 +345,14 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
     final response;
 
     switch (myApiCall) {
-      /*case ApiCall.ISSUE_INFO:
+      case ApiCall.ISSUE_INFO:
         print("sending http get request for issueinfo");
         response = await http.get(uri.replace(queryParameters: {
           'token': accessToken,
-          'issue_id': _complementaryID.toString(),
+          'issue_id': _pickedIssueID.toString(),
           'language': 'en-gb',
         }));
-        break;*/
+        break;
       case ApiCall.SUB_BODY_PART:
         print("sending http get request for sub-body part");
         response = await http.get(uri.replace(queryParameters: {
@@ -258,39 +361,35 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
           'language': 'en-gb',
         }));
         break;
-      /*case ApiCall.BODY_SYMPTOMS:
+      case ApiCall.BODY_SYMPTOMS:
         print("sending http get request for body symptoms");
         response = await http.get(uri.replace(queryParameters: {
           'token': accessToken,
-          'location_id': _complementaryID.toString(),
+          'location_id': _bodyPrecisePartID.toString(),
           'selectorStatus': getStatusString(),
           'language': 'en-gb',
         }));
-        break;*/
-      /*case ApiCall.MORE_SYMPTOMS:
+        break;
+      case ApiCall.MORE_SYMPTOMS:
         print("sending http get request for related symptoms");
-        symptoms.clear();
-        symptoms.add(_complementaryID!);
         response = await http.get(uri.replace(queryParameters: {
           'token': accessToken,
-          'symptoms': jsonEncode(symptoms),
+          'symptoms': jsonEncode(_pickedSymptom),
           'gender': getGenderString(),
-          'year_of_birth': _birthYear.toString(),
+          'year_of_birth': _birthYearChosed.toString(),
           'language': 'en-gb',
         }));
-        break;*/
-      /*case ApiCall.DIAGNOSIS:
+        break;
+      case ApiCall.DIAGNOSIS:
         print("sending http get request for diagnosis");
-        symptoms.clear();
-        symptoms.add(_complementaryID!);
         response = await http.get(uri.replace(queryParameters: {
           'token': accessToken,
-          'symptoms': jsonEncode(symptoms),
+          'symptoms': getSymptomsID().toString(),
           'gender': getGenderString(),
-          'year_of_birth': _birthYear.toString(),
+          'year_of_birth': _birthYearChosed.toString(),
           'language': 'en-gb',
         }));
-        break;*/
+        break;
       /* case ApiCall.SPECIALIST:
         print("sending http get request for specialists");
         symptoms.clear();
@@ -343,6 +442,17 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
     }
   }
 
+  List<dynamic> _selectedSymptoms = [];
+
+  List<int> getSymptomsID() {
+    List<int> mySymptomsId = [];
+    for (final symptom in _selectedSymptoms) {
+      mySymptomsId.add(symptom["ID"]);
+    }
+    print(mySymptomsId);
+    return mySymptomsId;
+  }
+
   @override
   Widget build(BuildContext context) {
     switch (widget.actualStep) {
@@ -355,6 +465,7 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
               ElevatedButton(
                 onPressed: () {
                   _APIauthentificate();
+                  _selectedGender = ApiGender.MAN;
                   widget.updateGender(ApiGender.MAN);
                   widget.moveToNextPhase();
                 },
@@ -365,6 +476,7 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
               ElevatedButton(
                 onPressed: () {
                   _APIauthentificate();
+                  _selectedGender = ApiGender.WOMAN;
                   widget.updateGender(ApiGender.WOMAN);
                   widget.moveToNextPhase();
                 },
@@ -390,6 +502,7 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
             },
             onEditingComplete: () {
               widget.updatedBirthYear(int.parse(_textFieldController.text));
+              _birthYearChosed = int.parse(_textFieldController.text);
               _fetchAPI(ApiCall.BODY_PART);
               _textFieldFocusNode.unfocus();
               widget.moveToNextPhase();
@@ -432,7 +545,14 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
                       itemBuilder: (BuildContext context, int index) {
                         return Card(
                           child: ListTile(
-                            onTap: () {},
+                            onTap: () {
+                              widget.updatePreciseIllnessLocation(
+                                  allAPIfetchedElements[index]['Name']);
+                              _bodyPrecisePartID =
+                                  allAPIfetchedElements[index]['ID'];
+                              _fetchAPI(ApiCall.BODY_SYMPTOMS);
+                              widget.moveToNextPhase();
+                            },
                             title: Text(allAPIfetchedElements[index]['Name']),
                             subtitle: const Text("Tap to choose"),
                           ),
@@ -441,6 +561,206 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
                     ),
                   )
                 : const Text("Fetching illness sub-location data . . .")
+            : const Text("Error : Not authenticated to API");
+
+      case DiagnosisStep.LOCATED_SYMPTOMS:
+        return _authentificatedToAPI
+            ? _dataFetchedSuccessfully
+                ? Expanded(
+                    child: ListView.builder(
+                      itemCount: allAPIfetchedElements.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return Card(
+                          child: ListTile(
+                            onTap: () {
+                              widget.addSymptom(allAPIfetchedElements[index]);
+                              _pickedSymptom
+                                  .add(allAPIfetchedElements[index]['ID']);
+                              _selectedSymptoms
+                                  .add(allAPIfetchedElements[index]);
+                              _fetchAPI(ApiCall.MORE_SYMPTOMS);
+                              widget.moveToNextPhase();
+                            },
+                            title: Text(allAPIfetchedElements[index]['Name']),
+                            subtitle: const Text("Tap to choose"),
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                : const Text("Fetching located illness data . . .")
+            : const Text("Error : Not authenticated to API");
+
+      case DiagnosisStep.RELATED_SYMPTOMS:
+        return _authentificatedToAPI
+            ? _dataFetchedSuccessfully
+                ? Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            for (final symptom in _selectedSymptoms) {
+                              widget.addSymptom(symptom);
+                            }
+                            _fetchAPI(ApiCall.DIAGNOSIS);
+                            widget.moveToNextPhase();
+                          },
+                          child: const Text('Add selected symptoms'),
+                        ),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: allAPIfetchedElements.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              final symptom = allAPIfetchedElements[index];
+                              bool isChecked =
+                                  _selectedSymptoms.contains(symptom);
+                              return Card(
+                                  child: ListTile(
+                                onTap: () {
+                                  setState(() {
+                                    isChecked = !isChecked;
+                                    isChecked
+                                        ? _selectedSymptoms.add(symptom)
+                                        : _selectedSymptoms.remove(symptom);
+                                  });
+                                  print(_selectedSymptoms);
+                                  print(isChecked);
+                                },
+                                title: Text(symptom['Name']),
+                                subtitle: const Text("Tap to select"),
+                                trailing: Checkbox(
+                                    value: isChecked,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        isChecked = value!;
+                                        isChecked
+                                            ? _selectedSymptoms.add(symptom)
+                                            : _selectedSymptoms.remove(symptom);
+                                      });
+                                    }),
+                              ));
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : const Text("Fetching related symptoms data . . .")
+            : const Text("Error : Not authenticated to API");
+
+      case DiagnosisStep.DIAGNOSIS:
+        return _authentificatedToAPI
+            ? _dataFetchedSuccessfully
+                ? Expanded(
+                    child: ListView.builder(
+                    itemCount: allAPIfetchedElements.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Card(
+                        child: ListTile(
+                          onTap: () {
+                            widget.addIssue(
+                                allAPIfetchedElements[index]['Issue']);
+                            _pickedIssueID =
+                                allAPIfetchedElements[index]['Issue']['ID'];
+                            _fetchAPI(ApiCall.ISSUE_INFO);
+                            widget.moveToNextPhase();
+                          },
+                          title: Text(
+                              "${allAPIfetchedElements[index]['Issue']['ID']} - ${allAPIfetchedElements[index]['Issue']['Name']}"),
+                          subtitle: Text(
+                              "${allAPIfetchedElements[index]['Specialisation'][0]['ID']} : ${allAPIfetchedElements[index]['Specialisation'][0]['Name']}"),
+                        ),
+                      );
+                    },
+                  ))
+                : const Text("Fetching diagnosis data . . .")
+            : const Text("Error : Not authenticated to API");
+
+      case DiagnosisStep.ISSUE:
+        return _authentificatedToAPI
+            ? _dataFetchedSuccessfully
+                ? Expanded(
+                  child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(
+                              allAPIfetchedElements[0]['Name'],
+                              style: const TextStyle(
+                                  fontSize: 24.0, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Description',
+                                  style: TextStyle(
+                                    fontSize: 20.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8.0),
+                                Text(
+                                  allAPIfetchedElements[0]['Description'],
+                                  style: const TextStyle(fontSize: 16.0),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16.0),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Medical condition',
+                                  style: TextStyle(
+                                    fontSize: 20.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8.0),
+                                Text(
+                                  allAPIfetchedElements[0]['MedicalCondition'],
+                                  style: const TextStyle(fontSize: 16.0),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16.0),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Treatment',
+                                  style: TextStyle(
+                                    fontSize: 20.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8.0),
+                                Text(
+                                  allAPIfetchedElements[0]
+                                      ['TreatmentDescription'],
+                                  style: const TextStyle(fontSize: 16.0),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                )
+                : const Text("Fetching diagnosis data . . .")
             : const Text("Error : Not authenticated to API");
 
       default:
@@ -454,7 +774,16 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
 class Profile {
   int birthYear = 1000;
   ApiGender gender = ApiGender.WOMAN;
-  List<int> symptoms = [];
+  List<dynamic> symptoms = [];
+  dynamic issue;
 
   Profile();
+
+  String printSymptoms() {
+    String mySymptoms = "";
+    for (final symptom in symptoms) {
+      mySymptoms += symptom["Name"];
+    }
+    return mySymptoms;
+  }
 }

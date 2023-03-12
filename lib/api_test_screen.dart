@@ -417,6 +417,7 @@ class _ApiTestScreenState extends State<ApiTestScreen> {
           'year_of_birth': _birthYear.toString(),
           'language': 'en-gb',
         }));
+        print(jsonEncode(symptoms));
         break;
       case ApiCall.SPECIALIST:
         setState(() {
