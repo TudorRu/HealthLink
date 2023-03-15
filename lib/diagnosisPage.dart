@@ -113,7 +113,7 @@ class _DiagnosisPageState extends State<DiagnosisPage> {
           break;
         case DiagnosisStep.ILLNESS_LOCATION:
           _question =
-              "Can you tell me where are experiencing symptoms or discomfort?";
+              "Can you tell me where are you experiencing symptoms or discomfort?";
           break;
         case DiagnosisStep.PRECISE_ILLNESS_LOCATION:
           _question =
