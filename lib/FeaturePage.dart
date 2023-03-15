@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class FeaturePage extends StatelessWidget {
-  const FeaturePage({Key? key}) : super(key: key);
+
+  FeaturePage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -12,6 +13,7 @@ class FeaturePage extends StatelessWidget {
             buildBackground(),
             Center(
               child: Text(
+                 textAlign: TextAlign.center,
                 'We appologize, but this feature has not been developed yet. We appreciate your patience!'
               ),
             )

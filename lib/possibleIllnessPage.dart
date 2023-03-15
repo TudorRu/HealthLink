@@ -88,13 +88,19 @@ class PossibleIllnessPage extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 30),
                           child: Container(
                             width: 200,
-                            height: 150,
+                            height: 180,
                             decoration: BoxDecoration(
                               color: Color(0xFFd5eded),
                               borderRadius: BorderRadius.all(Radius.circular(20))
                             ),
                             child: Stack(
                               children: [
+                                Align(
+                                  alignment: Alignment(0, -0.3),
+                                  child: Text("Accuracy: ${allAPIfetchedElements[index]["Issue"]["Accuracy"]}", style: TextStyle(
+                                      fontWeight: FontWeight.w500, fontSize: 14, color: Color(0xFFEF8808)
+                                  )),
+                                ),
                                 Align(
                                   alignment: Alignment(0, -0.7),
                                   child: Text("${allAPIfetchedElements[index]["Issue"]["Name"]}", style: TextStyle(

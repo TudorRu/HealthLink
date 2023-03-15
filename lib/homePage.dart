@@ -5,7 +5,8 @@ import 'package:healthlink/profilePage.dart';
 import 'package:healthlink/recordPage.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+
+  HomePage({Key? key}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();

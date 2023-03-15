@@ -112,10 +112,6 @@ class _IllnessDetailsPageState extends State<IllnessDetailsPage> {
                       child: buildIllnessDetails(),
                     ),
                     Align(
-                      alignment: Alignment(0, 0.7),
-                      child: buildDoctorButton(),
-                    ),
-                    Align(
                       alignment: Alignment(0, 0.85),
                       child: buildCompleteButton(),
                     )
@@ -128,10 +124,6 @@ class _IllnessDetailsPageState extends State<IllnessDetailsPage> {
                       child: buildIllnessTreatment(),
                     ),
                     Align(
-                      alignment: Alignment(0, 0.7),
-                      child: buildDoctorButton(),
-                    ),
-                    Align(
                       alignment: Alignment(0, 0.85),
                       child: buildCompleteButton(),
                     )
@@ -142,10 +134,6 @@ class _IllnessDetailsPageState extends State<IllnessDetailsPage> {
                     Align(
                       alignment: Alignment(0, -0.8),
                       child: buildIllnessCondition(),
-                    ),
-                    Align(
-                      alignment: Alignment(0, 0.7),
-                      child: buildDoctorButton(),
                     ),
                     Align(
                       alignment: Alignment(0, 0.85),
@@ -281,22 +269,6 @@ class _IllnessDetailsPageState extends State<IllnessDetailsPage> {
   void fetchIssueInfo() {
     _fetchAPIelem(
         'https://sandbox-healthservice.priaid.ch/issues/${widget.pickedIssueID}/info');
-  }
-
-  Widget buildDoctorButton() {
-    return Container(
-      child: TextButton(
-          style: TextButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  side: BorderSide(color: Color(0xFF00ACC2)))),
-          onPressed: () {},
-          child: Padding(
-              padding: const EdgeInsets.only(left: 57, right: 57),
-              child: Text('Find a doctor',
-                  style:
-                      TextStyle(fontSize: 19, fontWeight: FontWeight.w300)))),
-    );
   }
 
   Widget buildCompleteButton() {

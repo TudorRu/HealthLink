@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:healthlink/diagnosisPage.dart';
 import 'package:healthlink/landingPage.dart';
 import 'package:healthlink/medicationPage.dart';
-import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class MainPage extends StatefulWidget {

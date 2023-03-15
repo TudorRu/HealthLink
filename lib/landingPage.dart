@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:healthlink/homePage.dart';
 
 class LandingPage extends StatelessWidget {
-  const LandingPage({Key? key}) : super(key: key);
+
+  bool avatar = false;
+
+  LandingPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
