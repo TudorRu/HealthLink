@@ -37,6 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   http: ^0.13.5
   crypto: ^3.0.2
+  datepicker_dropdown: ^0.0.7+1
 
 dev_dependencies:
   flutter_test:

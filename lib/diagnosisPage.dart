@@ -37,6 +37,9 @@ enum ApiGender {
   GIRL,
 }
 
+String _question =
+    "To ensure we provide you with the best care possible, could you please share your gender identity with me?";
+
 class DiagnosisPage extends StatefulWidget {
   const DiagnosisPage({Key? key}) : super(key: key);
 
@@ -46,13 +49,13 @@ class DiagnosisPage extends StatefulWidget {
 
 class _DiagnosisPageState extends State<DiagnosisPage> {
   DiagnosisStep _actualStep = DiagnosisStep.GENDER;
-  String _question =
-      "To ensure we provide you with the best care possible, could you please share your gender identity with me?";
+
   String _debugText = "Debug text";
 
   Profile _patientProfile = Profile();
   String _illnessLocation = "";
   String _preciseIllnessLocation = "";
+
 
   void _updateGender(ApiGender gender) {
     setState(() {
@@ -117,13 +120,13 @@ class _DiagnosisPageState extends State<DiagnosisPage> {
               "Where specifically are you experiencing symptoms or discomfort?";
           break;
         case DiagnosisStep.LOCATED_SYMPTOMS:
-          _question = "What is your symptom ?";
+          _question = "Please select from the list below one symptom that you are currently experiencing.";
           break;
         case DiagnosisStep.RELATED_SYMPTOMS:
-          _question = "Do you have some of those related symptoms ?";
+          _question = "Do you experience any of below symptoms?";
           break;
         case DiagnosisStep.DIAGNOSIS:
-          _question = "Pick the issue that seems the most relatable :";
+          
           break;
         case DiagnosisStep.ISSUE:
           _question = "Here is your diagnosis :";
@@ -272,6 +275,10 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
   String accessToken = '';
   bool _authentificatedToAPI = false;
   bool _dataFetchedSuccessfully = false;
+  List<String>years = ['2000', '2001'];
+  String? value;
+
+  String text = "Enter birth year";
 
   int _bodyPartID = 0;
   int _bodyPrecisePartID = 0;
@@ -634,7 +641,7 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
 
       case DiagnosisStep.BIRTH_YEAR:
         return Container(
-          width: 250,
+          width: 200,
           child: TextField(
             focusNode: _textFieldFocusNode,
             controller: _textFieldController,
@@ -647,11 +654,18 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
               _textFieldFocusNode.unfocus();
             },
             onEditingComplete: () {
-              widget.updatedBirthYear(int.parse(_textFieldController.text));
-              _fetchAPI(ApiCall.BODY_PART);
-              _textFieldFocusNode.unfocus();
-              widget.moveToNextPhase();
-            },
+                if(int.parse(_textFieldController.text) < 1900 || int.parse(_textFieldController.text) > 2023)
+                  {
+
+                  }
+                else
+                {
+                  widget.updatedBirthYear(int.parse(_textFieldController.text));
+                  _fetchAPI(ApiCall.BODY_PART);
+                  _textFieldFocusNode.unfocus();
+                  widget.moveToNextPhase();
+                }
+              }
           ),
         );
 
@@ -661,6 +675,7 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
                 ? Container(
                     width: 300,
                     child: ListView.builder(
+                        padding: EdgeInsets.only(top: 30),
                         shrinkWrap: true,
                         itemCount: allAPIfetchedElements.length,
                         itemBuilder: (BuildContext context, int index) {
@@ -699,6 +714,7 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
                 ? Container(
                     width: 300,
                     child: ListView.builder(
+                      padding: EdgeInsets.only(top: 30),
                       shrinkWrap: true,
                       itemCount: allAPIfetchedElements.length,
                       itemBuilder: (BuildContext context, int index) {
@@ -732,6 +748,7 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
                 ? Container(
                     width: 300,
                     child: ListView.builder(
+                      padding: EdgeInsets.only(top: 30),
                       shrinkWrap: true,
                       itemCount: allAPIfetchedElements.length,
                       itemBuilder: (BuildContext context, int index) {
@@ -832,6 +849,7 @@ class _AnswerBuilderState extends State<AnswerBuilder> {
             ? _dataFetchedSuccessfully
                 ? Expanded(
                     child: ListView.builder(
+                      padding: EdgeInsets.only(top: 30),
                     itemCount: allAPIfetchedElements.length,
                     itemBuilder: (BuildContext context, int index) {
                       return Card(

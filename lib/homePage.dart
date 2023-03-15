@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:healthlink/FeaturePage.dart';
 import 'package:healthlink/mainPage.dart';
 import 'package:healthlink/profilePage.dart';
 import 'package:healthlink/recordPage.dart';
@@ -15,8 +16,8 @@ class _HomePageState extends State<HomePage> {
   int index = 0;
   final screens = [
       MainPage(),
-      ProfilePage(),
-      RecordPage()
+      FeaturePage(),
+      FeaturePage()
 
   ];
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:healthlink/homePage.dart';
+import 'package:healthlink/mainPage.dart';
 import 'dart:convert';
 
-import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 
 class IllnessDetailsPage extends StatefulWidget {
@@ -20,75 +20,141 @@ class IllnessDetailsPage extends StatefulWidget {
 class _IllnessDetailsPageState extends State<IllnessDetailsPage> {
   bool _dataFetchedSuccessfully = false;
   List<dynamic> allAPIfetchedElements = [];
+  bool isLoading = true;
 
   @override
   void initState() {
-    super.initState();
     fetchIssueInfo();
+    super.initState();
+
+    Future.delayed(Duration(seconds: 2), ()
+    {
+      setState(() {
+        isLoading = false;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        extendBodyBehindAppBar: false,
-        appBar: AppBar(
-          centerTitle: false,
-          automaticallyImplyLeading: false,
-          title: Padding(
-            padding: const EdgeInsets.only(top: 15, left: 12),
-            child: const Text(
-              'Your Diagnosis',
-              style: TextStyle(
+    return isLoading ?
+        Container(
+          color: Colors.white,
+          child: Center(
+            child: CircularProgressIndicator(),
+          ),
+        )
+    : DefaultTabController(
+        length: 3,
+        child: Scaffold(
+            extendBodyBehindAppBar: false,
+            appBar: AppBar(
+              centerTitle: false,
+              automaticallyImplyLeading: false,
+              title: Padding(
+                padding: const EdgeInsets.only(top: 15, left: 12),
+                child: Text(
+                  allAPIfetchedElements[0]['Name'],
+                  style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w400),
+                ),
+              ),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(10),
+                child: Container(
                   color: Colors.black,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w400),
+                  height: 0.2,
+                ),
+              ),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: IconButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  HomePage()), // push the new page onto the stack
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.delete_forever_outlined,
+                        color: Colors.black,
+                        size: 29,
+                      )),
+                )
+              ],
             ),
-          ),
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(10),
-            child: Container(
-              color: Colors.black,
-              height: 0.2,
-            ),
-          ),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          actions: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              HomePage()), // push the new page onto the stack
-                    );
-                  },
-                  icon: Icon(
-                    Icons.delete_forever_outlined,
-                    color: Colors.black,
-                    size: 29,
-                  )),
-            )
-          ],
-        ),
-        body: Stack(fit: StackFit.expand, children: [
-          buildBackground(),
-          Align(alignment: Alignment(0, 0.15), child: buildAvatar()),
-          Align(
-            alignment: Alignment(0, -0.8),
-            child: buildIllnessDetails(),
-          ),
-          Align(
-            alignment: Alignment(0, 0.7),
-            child: buildDoctorButton(),
-          ),
-          Align(
-            alignment: Alignment(0, 0.85),
-            child: buildCompleteButton(),
-          )
-        ]));
+            body: Column(children: [
+              TabBar(tabs: [
+                Tab(
+                  icon: Icon(Icons.info_outline, color: Colors.black),
+                ),
+                Tab(
+                  icon: Icon(Icons.medication_outlined, color: Colors.black),
+                ),
+                Tab(
+                  icon: Icon(Icons.description_outlined, color: Colors.black),
+                )
+              ]),
+              Expanded(
+                child: TabBarView(children: [
+                  Stack(fit: StackFit.expand, children: [
+                    buildBackground(),
+                    Align(alignment: Alignment(0, 0.15), child: buildAvatar()),
+                    Align(
+                      alignment: Alignment(0, -0.8),
+                      child: buildIllnessDetails(),
+                    ),
+                    Align(
+                      alignment: Alignment(0, 0.7),
+                      child: buildDoctorButton(),
+                    ),
+                    Align(
+                      alignment: Alignment(0, 0.85),
+                      child: buildCompleteButton(),
+                    )
+                  ]),
+                  Stack(fit: StackFit.expand, children: [
+                    buildBackground(),
+                    Align(alignment: Alignment(0, 0.15), child: buildAvatar()),
+                    Align(
+                      alignment: Alignment(0, -0.8),
+                      child: buildIllnessTreatment(),
+                    ),
+                    Align(
+                      alignment: Alignment(0, 0.7),
+                      child: buildDoctorButton(),
+                    ),
+                    Align(
+                      alignment: Alignment(0, 0.85),
+                      child: buildCompleteButton(),
+                    )
+                  ]),
+                  Stack(fit: StackFit.expand, children: [
+                    buildBackground(),
+                    Align(alignment: Alignment(0, 0.15), child: buildAvatar()),
+                    Align(
+                      alignment: Alignment(0, -0.8),
+                      child: buildIllnessCondition(),
+                    ),
+                    Align(
+                      alignment: Alignment(0, 0.7),
+                      child: buildDoctorButton(),
+                    ),
+                    Align(
+                      alignment: Alignment(0, 0.85),
+                      child: buildCompleteButton(),
+                    )
+                  ])
+                ]),
+              )
+            ])));
   }
 
   Widget buildBackground() {
@@ -113,20 +179,14 @@ class _IllnessDetailsPageState extends State<IllnessDetailsPage> {
       width: 350,
       decoration: BoxDecoration(
           border: Border.all(
-            color: Colors.red,
+            color: Colors.transparent,
           ),
           borderRadius: BorderRadius.all(Radius.circular(50))),
       child: _dataFetchedSuccessfully
           ? Stack(
               children: [
                 Align(
-                  alignment: Alignment(-0.8, -0.8),
-                  child: Text(allAPIfetchedElements[0]['Name'],
-                      style:
-                          TextStyle(fontWeight: FontWeight.w500, fontSize: 20)),
-                ),
-                Align(
-                  alignment: Alignment(0, 0),
+                  alignment: Alignment(0, -0.6),
                   child: Text(allAPIfetchedElements[0]['Description'],
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -136,6 +196,60 @@ class _IllnessDetailsPageState extends State<IllnessDetailsPage> {
                 )
               ],
             )
+          : Text('Loqdnig'),
+    );
+  }
+
+  Widget buildIllnessCondition() {
+    return Container(
+      height: 240,
+      width: 350,
+      decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.transparent,
+          ),
+          borderRadius: BorderRadius.all(Radius.circular(50))),
+      child: _dataFetchedSuccessfully
+          ? Stack(
+        children: [
+          Align(
+            alignment: Alignment(0, -0.6),
+            child: Text(allAPIfetchedElements[0]['MedicalCondition'],
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                )),
+          )
+        ],
+      )
+          : Text('Loqdnig'),
+    );
+  }
+
+  Widget buildIllnessTreatment() {
+    return Container(
+      height: 240,
+      width: 350,
+      decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.transparent,
+          ),
+          borderRadius: BorderRadius.all(Radius.circular(50))),
+      child: _dataFetchedSuccessfully
+          ? Stack(
+        children: [
+          Align(
+            alignment: Alignment(0, -0.6),
+            child: Text(allAPIfetchedElements[0]['TreatmentDescription'],
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                )),
+          )
+        ],
+      )
           : Text('Loqdnig'),
     );
   }
@@ -192,7 +306,9 @@ class _IllnessDetailsPageState extends State<IllnessDetailsPage> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(25),
                   side: BorderSide(color: Color(0xFF00ACC2)))),
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
+          },
           child: Padding(
               padding: const EdgeInsets.only(left: 70, right: 70),
               child: Text('Complete',

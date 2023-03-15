@@ -168,7 +168,7 @@ class PossibleIllnessPage extends StatelessWidget {
       ),
     )
     : Text(
-    'People with symptoms similar to yours do not require prompt medical assessment and care.',
+    'Please note that the information provided by this app is intended for informational purposes only and should not be used as a substitute for professional medical advice, diagnosis, or treatment. If you have any concerns about your health, please consult with a qualified healthcare professional.',
     textAlign: TextAlign.center,
     style: TextStyle(
     fontSize: 18, fontWeight: FontWeight.w300
