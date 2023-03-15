@@ -109,7 +109,7 @@ class _DiagnosisPageState extends State<DiagnosisPage> {
               "To ensure we provide you with the best care possible, could you please share your gender identity with me?";
           break;
         case DiagnosisStep.BIRTH_YEAR:
-          _question = "May I ask you about you year of birth?";
+          _question = "Can you provide your year of birth?";
           break;
         case DiagnosisStep.ILLNESS_LOCATION:
           _question =
@@ -126,7 +126,7 @@ class _DiagnosisPageState extends State<DiagnosisPage> {
           _question = "Do you experience any of below symptoms?";
           break;
         case DiagnosisStep.DIAGNOSIS:
-          
+
           break;
         case DiagnosisStep.ISSUE:
           _question = "Here is your diagnosis :";
