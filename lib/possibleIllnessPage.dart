@@ -3,7 +3,14 @@ import 'package:healthlink/homePage.dart';
 import 'package:healthlink/illnessDetailsPage.dart';
 
 class PossibleIllnessPage extends StatelessWidget {
-  const PossibleIllnessPage({Key? key}) : super(key: key);
+
+  final List<dynamic> allAPIfetchedElements;
+  final bool redFlag;
+  final String accessToken;
+
+
+
+  const PossibleIllnessPage({Key? key, required this.allAPIfetchedElements, required this.redFlag, required this.accessToken}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -43,39 +50,92 @@ class PossibleIllnessPage extends StatelessWidget {
           )
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Container(
-                child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Align(
-                        alignment: Alignment(-0.9, 0.4),
-                        child: buildAvatar(),
-                      ),
-                      Align(
-                        alignment: Alignment(0.8, -0.3),
-                        child: Container(
-                          width: (MediaQuery.of(context).size.width) / 2,
-                          child: buildAdvice(),
+      body: Container(
+        decoration: const BoxDecoration(
+            image: DecorationImage(
+                image: AssetImage("assets/fin3.png"), fit: BoxFit.fill)),
+        child: Column(
+          children: [
+            Expanded(
+              child: Container(
+                  child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Align(
+                          alignment: Alignment(-0.9, 0.4),
+                          child: buildAvatar(),
                         ),
-
-
-                      )
-                    ])
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: Container(
-              width: MediaQuery.of(context).size.width,
-              child: SingleChildScrollView(
-                  child: buildCauses(context)
+                        Align(
+                          alignment: Alignment(0.8, -0.3),
+                          child: Container(
+                            width: (MediaQuery.of(context).size.width) / 2,
+                            child: buildAdvice(redFlag),
+                          ),
+                        )
+                      ])
               ),
             ),
-          ),
-        ],
+            Expanded(
+              flex: 1,
+              child: Align(
+                child: Container(
+                  width: 330,
+                  child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: allAPIfetchedElements.length,
+                      itemBuilder: (BuildContext context, int index){
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 30),
+                          child: Container(
+                            width: 200,
+                            height: 150,
+                            decoration: BoxDecoration(
+                              color: Color(0xFFd5eded),
+                              borderRadius: BorderRadius.all(Radius.circular(20))
+                            ),
+                            child: Stack(
+                              children: [
+                                Align(
+                                  alignment: Alignment(0, -0.7),
+                                  child: Text("${allAPIfetchedElements[index]["Issue"]["Name"]}", style: TextStyle(
+                                      fontWeight: FontWeight.w500, fontSize: 20
+                                  )),
+                                ),
+                                Align(
+                                  alignment: Alignment(0, 0.7),
+                                  child: TextButton(
+                                      style: TextButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(25),
+                                              side: BorderSide(color: Color(0xFF00ACC2))
+                                          ),
+                                          foregroundColor: Colors.black,
+                                          backgroundColor: Colors.transparent
+                                      ),
+                                      onPressed: () {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(builder: (context) => IllnessDetailsPage(accessToken: accessToken, pickedIssueID:allAPIfetchedElements[index]["Issue"]['ID'],), // push the new page onto the stack
+                                            ));
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(left: 10,right: 10),
+                                        child: Text('Tell me more', style: TextStyle(
+                                            fontSize: 17, fontWeight: FontWeight.w400
+                                        )),
+                                      )
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -97,98 +157,21 @@ class PossibleIllnessPage extends StatelessWidget {
     );
   }
 
-  Widget buildAdvice() {
-    return Text(
+  Widget buildAdvice(bool redFlag) {
+    return redFlag
+        ? Text(
       'People with symptoms similar to yours may require prompt medical assessment and care. '
           'You should seek advice from a doctor within the next few hours',
       textAlign: TextAlign.center,
       style: TextStyle(
           fontSize: 18, fontWeight: FontWeight.w300
       ),
-    );
-  }
-
-  Widget buildCauses(context){
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          Container(
-              width: 350,
-              height: 200,
-              child: Stack(
-                children: [
-                  Align(
-                    alignment: Alignment(-0.7, -0.7),
-                    child: Text('Coronavirus 2019', style: TextStyle(
-                        fontWeight: FontWeight.w500, fontSize: 20
-                    )),
-                  ),
-                  Align(
-                    alignment: Alignment(-0.7, -0.4),
-                    child: Text('Seek medical avdvice', style: TextStyle(
-                        fontWeight: FontWeight.w500, fontSize: 15, color: Colors.deepOrange
-                    )),
-                  ),
-                  Align(
-                    alignment: Alignment(0.7, 0.7),
-                    child: TextButton(
-                        style: TextButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(25),
-                                side: BorderSide(color: Color(0xFF00ACC2))
-                            ),
-                            foregroundColor: Colors.black,
-                            backgroundColor: Colors.transparent
-                        ),
-                        onPressed: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => IllnessDetailsPage(), // push the new page onto the stack
-                              ));
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 10,right: 10),
-                          child: Text('Tell me more', style: TextStyle(
-                              fontSize: 17, fontWeight: FontWeight.w400
-                          )),
-                        )
-                    ),
-                  )
-                ],
-              ),
-              margin: new EdgeInsets.symmetric(vertical: 10.0),
-              decoration: BoxDecoration(
-
-                  border: Border.all(
-                    color: Colors.red,
-                  ),
-                  borderRadius: BorderRadius.all(Radius.circular(50))
-              )
-          ),
-          Container(
-              width: 350,
-              height: 200,
-              margin: new EdgeInsets.symmetric(vertical: 10.0),
-              decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.red,
-                  ),
-                  borderRadius: BorderRadius.all(Radius.circular(50))
-              )
-          ),
-          Container(
-              width: 350,
-              height: 200,
-              margin: new EdgeInsets.symmetric(vertical: 10.0),
-              decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.red,
-                  ),
-                  borderRadius: BorderRadius.all(Radius.circular(50))
-              )
-          ),
-        ],
-      ),
-    );
+    )
+    : Text(
+    'People with symptoms similar to yours do not require prompt medical assessment and care.',
+    textAlign: TextAlign.center,
+    style: TextStyle(
+    fontSize: 18, fontWeight: FontWeight.w300
+    ));
   }
 }

@@ -39,19 +39,19 @@ class _State extends State<MainPage> {
           children: [
             buildBackground(),
             Align(
-                alignment: Alignment(0, -0.5),
+                alignment: Alignment(0, -0.6),
                 child: buildGreet()
             ),
             Align(
-              alignment: Alignment(-0.55, 0.05),
+              alignment: Alignment(-0.55, 0),
               child: buildButton(),
             ),
             Align(
-              alignment: Alignment(-0.68, 0.3),
+              alignment: Alignment(-0.68, 0.2),
               child: buildText(),
             ),
             Align(
-              alignment: Alignment(-0.1, 0.72),
+              alignment: Alignment(-0.1, 0.62),
               child: buildMedication(),
             )
           ]),
