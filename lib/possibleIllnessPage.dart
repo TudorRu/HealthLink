@@ -1,16 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:healthlink/homePage.dart';
 import 'package:healthlink/illnessDetailsPage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class PossibleIllnessPage extends StatelessWidget {
+class PossibleIllnessPage extends StatefulWidget {
 
   final List<dynamic> allAPIfetchedElements;
   final bool redFlag;
   final String accessToken;
 
-
-
   const PossibleIllnessPage({Key? key, required this.allAPIfetchedElements, required this.redFlag, required this.accessToken}) : super(key: key);
+
+  @override
+  State<PossibleIllnessPage> createState() => _PossibleIllnessPageState();
+}
+
+class _PossibleIllnessPageState extends State<PossibleIllnessPage> {
+  late SharedPreferences prefs;
+  String? doctorAvatar = "assets/female_avatar.png";
+
+  @override
+  void initState() {
+    super.initState();
+    initSharedPreferences();
+  }
+
+  void initSharedPreferences() async {
+    prefs = await SharedPreferences.getInstance();
+    setState(() {
+      doctorAvatar = prefs.getString('DoctorAvatar');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +89,7 @@ class PossibleIllnessPage extends StatelessWidget {
                           alignment: Alignment(0.8, -0.3),
                           child: Container(
                             width: (MediaQuery.of(context).size.width) / 2,
-                            child: buildAdvice(redFlag),
+                            child: buildAdvice(widget.redFlag),
                           ),
                         )
                       ])
@@ -82,7 +102,7 @@ class PossibleIllnessPage extends StatelessWidget {
                   width: 330,
                   child: ListView.builder(
                       shrinkWrap: true,
-                      itemCount: allAPIfetchedElements.length,
+                      itemCount: widget.allAPIfetchedElements.length,
                       itemBuilder: (BuildContext context, int index){
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 30),
@@ -97,13 +117,13 @@ class PossibleIllnessPage extends StatelessWidget {
                               children: [
                                 Align(
                                   alignment: Alignment(0, -0.3),
-                                  child: Text("Accuracy: ${allAPIfetchedElements[index]["Issue"]["Accuracy"]}", style: TextStyle(
+                                  child: Text("Accuracy: ${widget.allAPIfetchedElements[index]["Issue"]["Accuracy"]}", style: TextStyle(
                                       fontWeight: FontWeight.w500, fontSize: 14, color: Color(0xFFEF8808)
                                   )),
                                 ),
                                 Align(
                                   alignment: Alignment(0, -0.7),
-                                  child: Text("${allAPIfetchedElements[index]["Issue"]["Name"]}", style: TextStyle(
+                                  child: Text("${widget.allAPIfetchedElements[index]["Issue"]["Name"]}", style: TextStyle(
                                       fontWeight: FontWeight.w500, fontSize: 20
                                   )),
                                 ),
@@ -121,7 +141,7 @@ class PossibleIllnessPage extends StatelessWidget {
                                       onPressed: () {
                                         Navigator.push(
                                             context,
-                                            MaterialPageRoute(builder: (context) => IllnessDetailsPage(accessToken: accessToken, pickedIssueID:allAPIfetchedElements[index]["Issue"]['ID'],), // push the new page onto the stack
+                                            MaterialPageRoute(builder: (context) => IllnessDetailsPage(accessToken: widget.accessToken, pickedIssueID:widget.allAPIfetchedElements[index]["Issue"]['ID'],), // push the new page onto the stack
                                             ));
                                       },
                                       child: Padding(
@@ -159,7 +179,7 @@ class PossibleIllnessPage extends StatelessWidget {
   Widget buildAvatar() {
     return Container(
         child: Image.asset(
-          "assets/female_avatar.png", width: 180, height: 180,)
+          doctorAvatar!, width: 180, height: 180,)
     );
   }
 

@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:healthlink/homePage.dart';
 import 'package:healthlink/possibleIllnessPage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum ApiCall {
   BODY_PART,
@@ -56,6 +57,21 @@ class _DiagnosisPageState extends State<DiagnosisPage> {
   String _illnessLocation = "";
   String _preciseIllnessLocation = "";
 
+  late SharedPreferences prefs;
+  String? doctorAvatar = "assets/female_avatar.png";
+
+  @override
+  void initState() {
+    super.initState();
+    initSharedPreferences();
+  }
+
+  void initSharedPreferences() async {
+    prefs = await SharedPreferences.getInstance();
+    setState(() {
+      doctorAvatar = prefs.getString('DoctorAvatar');
+    });
+  }
 
   void _updateGender(ApiGender gender) {
     setState(() {
@@ -235,7 +251,7 @@ class _DiagnosisPageState extends State<DiagnosisPage> {
   Widget buildAvatar() {
     return Container(
         child: Image.asset(
-      "assets/female_avatar.png",
+          doctorAvatar!,
       width: 200,
       height: 200,
     ));

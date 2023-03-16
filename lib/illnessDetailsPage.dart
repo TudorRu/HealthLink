@@ -4,6 +4,7 @@ import 'package:healthlink/mainPage.dart';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class IllnessDetailsPage extends StatefulWidget {
   final String accessToken;
@@ -21,12 +22,22 @@ class _IllnessDetailsPageState extends State<IllnessDetailsPage> {
   bool _dataFetchedSuccessfully = false;
   List<dynamic> allAPIfetchedElements = [];
   bool isLoading = true;
+  late SharedPreferences prefs;
+  String? doctorAvatar = "assets/female_avatar.png";
+
+
+  void initSharedPreferences() async {
+    prefs = await SharedPreferences.getInstance();
+    setState(() {
+      doctorAvatar = prefs.getString('DoctorAvatar');
+    });
+  }
 
   @override
   void initState() {
     fetchIssueInfo();
     super.initState();
-
+    initSharedPreferences();
     Future.delayed(Duration(seconds: 2), ()
     {
       setState(() {
@@ -155,7 +166,7 @@ class _IllnessDetailsPageState extends State<IllnessDetailsPage> {
   Widget buildAvatar() {
     return Container(
         child: Image.asset(
-      "assets/female_avatar.png",
+          doctorAvatar!,
       width: 180,
       height: 180,
     ));
